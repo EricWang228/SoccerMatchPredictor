@@ -91,13 +91,13 @@ links = [f"https://fbref.com{link}" for link in links]
 data = []
 team_links = get_team_premier_urls(links)
 data.append(get_header(team_links[0]))
-time.sleep(20)
+time.sleep(60)
 data.append(visit_team_premier_urls(team_links))
 
 # Write data to csv file
 csv_file = 'premier_league_2023-2024.csv'
 print(f"Writing data to {csv_file}")
-with open(csv_file, 'w', newline='') as f:
+with open(csv_file, 'w', newline='', encoding="utf-8") as f:
     writer = csv.writer(f)
     writer.writerow(data[0])
     writer.writerows(data[1])
