@@ -20,6 +20,7 @@ def get_team_premier_urls(team_urls):
     
         # Link for only the team's premier league games
         team_premier_urls.append("https://fbref.com" + premier_link[1].get("href"))
+        time.sleep(3)
     print("Finished")
     return team_premier_urls
 # Todo
