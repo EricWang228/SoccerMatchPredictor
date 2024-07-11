@@ -6,7 +6,7 @@ import time
 def get_team_premier_urls(team_urls):
     print("Grabbing Team Links!")
     team_premier_urls = []
-    for team_url in team_urls:
+    for counter, team_url in enumerate(team_urls):
         premier_req = Request(
             url = team_url,
             headers = {'User-Agent': 'Mozilla/5.0'}
@@ -20,30 +20,49 @@ def get_team_premier_urls(team_urls):
     
         # Link for only the team's premier league games
         team_premier_urls.append("https://fbref.com" + premier_link[1].get("href"))
+        print(counter, end=' ')
         time.sleep(3)
-    print("Finished")
+    print("\nFinished")
     return team_premier_urls
-# Todo
-def visit_team_premier_urls(premier_urls):
-    # Visit the new link
+
+def get_header(team_link):
     premier_req = Request(
-        url = premier_link,
+        url = team_link,
         headers = {'User-Agent': 'Mozilla/5.0'}
     )
     premier_webpage = urlopen(premier_req).read().decode("utf-8")
-    premier_soup = BeautifulSoup(premier_webpage, 'html.parser')
+    soup = BeautifulSoup(premier_webpage, 'html.parser')
     
-    # Find the scores and fixtures table & parse through it
-    premier_table = premier_soup.find('table') 
+    # Find the scores and fixtures table & parse the header information
+    premier_table = soup.find('table') 
     premier_table_headers = [headers.get_text(strip=True)for headers in premier_table.thead.find_all('th')]
-    premier_table_data = []
-    for row in premier_table.tbody.find_all('tr'):
-        row_data = []
-        for cell in row.find_all(['th', 'td']):
-            row_data.append(cell.get_text(strip=True))
-        premier_table_data.append(row_data)
+    return premier_table_headers
     
-    return premier_table_headers + premier_table_data
+def visit_team_premier_urls(premier_urls):
+    premier_table_data = []
+    print("Webscraping in progress")
+    # Visits all links to premier league teams
+    for counter, team in enumerate(premier_urls):
+        # Visit the new link
+        team_req = Request(
+            url = team,
+            headers = {'User-Agent': 'Mozilla/5.0'}
+        )
+        team_webpage = urlopen(team_req).read().decode("utf-8")
+        soup = BeautifulSoup(team_webpage, 'html.parser')
+        
+        # Find the scores and fixtures table & parse through it
+        premier_table = soup.find('table') 
+        for row in premier_table.tbody.find_all('tr'):
+            row_data = []
+            for cell in row.find_all(['th', 'td']):
+                row_data.append(cell.get_text(strip=True))
+            premier_table_data.append(row_data)
+        print(counter, end=' ')
+        # Buffer to prevent too many requests sent at once
+        time.sleep(3)
+    print("\nFinished")
+    return premier_table_data
 
 # URL of the webpage to scrape
 req = Request(
@@ -70,10 +89,17 @@ links = [f"https://fbref.com{link}" for link in links]
 
 # Visit the team links
 data = []
+team_links = get_team_premier_urls(links)
+data.append(get_header(team_links[0]))
+time.sleep(20)
+data.append(visit_team_premier_urls(team_links))
 
-get_team_premier_urls(links)
+# Write data to csv file
+csv_file = 'premier_league_2023-2024.csv'
+print(f"Writing data to {csv_file}")
+with open(csv_file, 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(data[0])
+    writer.writerows(data[1])
 
-
-# csv_file = 'premier_league_2023-2024.csv'
-# Get the links for all teams
-# print(f"Data has been successfully written to {csv_file}")
+print(f"Data has been successfully written to {csv_file}")
