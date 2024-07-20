@@ -2,7 +2,7 @@ import csv
 import pandas as pd
 import os
 from sklearn.ensemble import RandomForestClassifier
-
+from sklearn.metrics import accuracy_score
 def clean_data() -> list:
     premier_matches = pd.read_csv(os.getcwd() + "/webscrape/premier_league_2023-2024.csv")
     
@@ -20,9 +20,20 @@ def clean_data() -> list:
     premier_matches['op_codes'] = premier_matches['Opponent'].astype('category').cat.codes
     
     return premier_matches
+def model(data : list):
+    rf = RandomForestClassifier(n_estimators=100, min_samples_split=10, random_state=1)
+    train = data
+    predictors = ["venue_code", "op_codes", "Poss", "xG", "xGA"]
+    rf.fit(train[predictors], train["target"])
+    preds = rf.predict(data[predictors])
+    error = accuracy_score(data["target"], preds)
+    combined = pd.DataFrame(dict(actual=data["target"], predicted=preds))
+    print(pd.crosstab(index=combined["actual"], columns=combined["predicted"]))
+    # print(combined)
     
 def main():
     cleaned_matches = clean_data()
+    model(cleaned_matches)
     
 if __name__ == '__main__':
     main()
