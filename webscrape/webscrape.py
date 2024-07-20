@@ -1,4 +1,5 @@
 from urllib.request import Request, urlopen
+import requests
 from bs4 import BeautifulSoup
 import csv
 import time
@@ -63,43 +64,47 @@ def visit_team_premier_urls(premier_urls):
         time.sleep(3)
     print("\nFinished")
     return premier_table_data
+def main():
+    
+    # URL of the webpage to scrape
+    req = Request(
+        url = 'https://fbref.com/en/comps/9/Premier-League-Stats',
+        headers = {'User-Agent': 'Mozilla/5.0'})
 
-# URL of the webpage to scrape
-req = Request(
-    url = 'https://fbref.com/en/comps/9/Premier-League-Stats',
-    headers = {'User-Agent': 'Mozilla/5.0'})
+    webpage = urlopen(req).read().decode("utf-8")
 
-webpage = urlopen(req).read().decode("utf-8")
+    # Parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(webpage, 'html.parser')
 
-# Parse the HTML content using BeautifulSoup
-soup = BeautifulSoup(webpage, 'html.parser')
+    # Find premier league team standing table 
+    premier_league_table = soup.find('table', {'class' : 'stats_table sortable min_width force_mobilize'})
 
-# Find premier league team standing table 
-premier_league_table = soup.find('table', {'class' : 'stats_table sortable min_width force_mobilize'})
+    # Extract all links from the table
+    links = premier_league_table.find_all('a')
+    links = [link.get("href") for link in links]
 
-# Extract all links from the table
-links = premier_league_table.find_all('a')
-links = [link.get("href") for link in links]
+    #  Remove links to the top team scorer, only team links remain
+    links = [link for link in links if '/en/squads/' in link]
 
-#  Remove links to the top team scorer, only team links remain
-links = [link for link in links if '/en/squads/' in link]
+    # Add domain to team links
+    links = [f"https://fbref.com{link}" for link in links]
 
-# Add domain to team links
-links = [f"https://fbref.com{link}" for link in links]
+    # Visit the team links
+    data = []
+    team_links = get_team_premier_urls(links)
+    data.append(get_header(team_links[0]))
+    time.sleep(60)
+    data.append(visit_team_premier_urls(team_links))
 
-# Visit the team links
-data = []
-team_links = get_team_premier_urls(links)
-data.append(get_header(team_links[0]))
-time.sleep(60)
-data.append(visit_team_premier_urls(team_links))
+    # Write data to csv file
+    csv_file = 'premier_league_2023-2024.csv'
+    print(f"Writing data to {csv_file}")
+    with open(csv_file, 'w', newline='', encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(data[0])
+        writer.writerows(data[1])
 
-# Write data to csv file
-csv_file = 'premier_league_2023-2024.csv'
-print(f"Writing data to {csv_file}")
-with open(csv_file, 'w', newline='', encoding="utf-8") as f:
-    writer = csv.writer(f)
-    writer.writerow(data[0])
-    writer.writerows(data[1])
+    print(f"Data has been successfully written to {csv_file}")
 
-print(f"Data has been successfully written to {csv_file}")
+if __name__ == '__main__':
+    main()
