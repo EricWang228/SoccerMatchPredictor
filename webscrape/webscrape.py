@@ -64,13 +64,12 @@ def visit_team_premier_urls(premier_urls):
         time.sleep(3)
     print("\nFinished")
     return premier_table_data
-def main():
-    
-    # URL of the webpage to scrape
-    req = Request(
-        url = 'https://fbref.com/en/comps/9/Premier-League-Stats',
-        headers = {'User-Agent': 'Mozilla/5.0'})
 
+def get_team_links(url: str) -> list:
+    req = Request(
+        url = url,
+        headers = {'User-Agent': 'Mozilla/5.0'}
+    )
     webpage = urlopen(req).read().decode("utf-8")
 
     # Parse the HTML content using BeautifulSoup
@@ -88,23 +87,34 @@ def main():
 
     # Add domain to team links
     links = [f"https://fbref.com{link}" for link in links]
+    return links
 
-    # Visit the team links
-    data = []
-    team_links = get_team_premier_urls(links)
-    data.append(get_header(team_links[0]))
-    time.sleep(60)
-    data.append(visit_team_premier_urls(team_links))
+def get_data_by_year(start_year: int, end_year: int):
+    for year in range(start_year, end_year):
+        print("Getting data for the {year1}-{year2} season".format(year1 = str(year), year2 = str(year + 1)))
+        links = get_team_links('https://fbref.com/en/comps/9/{year1}-{year2}/{year1}-{year2}-Premier-League-Stats'.format(year1 = str(year),year2 = str(year + 1)))
+        # Visit the team links
+        data = []
+        team_links = get_team_premier_urls(links)
+        data.append(get_header(team_links[0]))
+        time.sleep(20)
+        data.append(visit_team_premier_urls(team_links))
+        
+        # Write data to csv file
+        csv_file = 'premier_league_{year1}-{year2}.csv'.format(year1 = str(year), year2 = str(year+1))
+        print(f"Writing data to {csv_file}")
+        
+        with open(csv_file, 'w', newline='', encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(data[0]) 
+            writer.writerows(data[1])
 
-    # Write data to csv file
-    csv_file = 'premier_league_2023-2024.csv'
-    print(f"Writing data to {csv_file}")
-    with open(csv_file, 'w', newline='', encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(data[0])
-        writer.writerows(data[1])
-
-    print(f"Data has been successfully written to {csv_file}")
+        print(f"Data has been successfully written to {csv_file}")
+        time.sleep(60)
+    return None
+ 
+def main():   
+    get_data_by_year(2021, 2023)
 
 if __name__ == '__main__':
     main()
