@@ -37,6 +37,7 @@ def get_header(team_link):
     # Find the scores and fixtures table & parse the header information
     premier_table = soup.find('table') 
     premier_table_headers = [headers.get_text(strip=True)for headers in premier_table.thead.find_all('th')]
+    premier_table_headers.append("Team")
     return premier_table_headers
     
 def visit_team_premier_urls(premier_urls):
@@ -52,12 +53,16 @@ def visit_team_premier_urls(premier_urls):
         team_webpage = urlopen(team_req).read().decode("utf-8")
         soup = BeautifulSoup(team_webpage, 'html.parser')
         
+        # Get the team name
+        team_name = team.split('/')[-1].replace("-Scores-and-Fixtures-Premier-League", "").replace("-","")
+        
         # Find the scores and fixtures table & parse through it
         premier_table = soup.find('table') 
         for row in premier_table.tbody.find_all('tr'):
             row_data = []
             for cell in row.find_all(['th', 'td']):
                 row_data.append(cell.get_text(strip=True))
+            row_data.append(team_name)
             premier_table_data.append(row_data)
         print(counter, end=' ')
         # Buffer to prevent too many requests sent at once
