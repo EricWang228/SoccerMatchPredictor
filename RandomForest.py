@@ -20,13 +20,17 @@ def clean_data() -> list:
     premier_matches['venue_code'] = premier_matches['Venue'].astype('category').cat.codes
     premier_matches['op_codes'] = premier_matches['Opponent'].astype('category').cat.codes
     
-    return premier_matches
+    # Rolling averages for xG and Poss
+    cols = ["xG", "Poss"]
+    new_cols = [f"{col}_rolling" for col in cols]
+    rolling_matches = premier_matches.groupby('Team').apply(lambda x: rolling_avg(x,cols,new_cols), include_groups=False)
+    return rolling_matches
 
 def predict(premier_matches : list):
     # Create a Random Forest Model
     rf = RandomForestClassifier(n_estimators=100, min_samples_split=10, random_state=1)
     # Predictors and training data
-    predictors = ["venue_code", "op_codes", "Poss", "xG", "xGA"]
+    predictors = ["venue_code", "op_codes", "Poss", "xG", "xGA", "xG_rolling", "Poss_rolling"]
     train_set = premier_matches[premier_matches['Date'] < '2023-12-28']
     test_set = premier_matches[premier_matches['Date'] > '2023-12-28']
     
@@ -41,7 +45,13 @@ def predict(premier_matches : list):
     error = accuracy_score(test_set['target'], prediction)
     return compared, error
     
-    
+def rolling_avg(group, cols, new_cols):
+    group = group.sort_values("Date")
+    rolling = group[cols].rolling(3, closed='left').mean()
+    group[new_cols] = rolling
+    group = group.dropna(subset=new_cols)
+    return group
+
 def main():
     premier_matches = clean_data()
     predictions, err = predict(premier_matches)
