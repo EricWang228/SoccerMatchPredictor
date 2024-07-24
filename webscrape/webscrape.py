@@ -1,8 +1,8 @@
 from urllib.request import Request, urlopen
-import requests
 from bs4 import BeautifulSoup
 import csv
 import time
+import os
 
 def get_team_premier_urls(team_urls):
     print("Grabbing Team Links!")
@@ -106,7 +106,7 @@ def get_data_by_year(start_year: int, end_year: int):
         data.append(visit_team_premier_urls(team_links))
         
         # Write data to csv file
-        csv_file = 'premier_league_{year1}-{year2}.csv'.format(year1 = str(year), year2 = str(year+1))
+        csv_file = os.getcwd() +'/premier_league_{year1}-{year2}.csv'.format(year1 = str(year), year2 = str(year+1))
         print(f"Writing data to {csv_file}")
         
         with open(csv_file, 'w', newline='', encoding="utf-8") as f:
@@ -119,7 +119,7 @@ def get_data_by_year(start_year: int, end_year: int):
     return None
  
 def main():   
-    get_data_by_year(2021, 2023)
+    get_data_by_year(2021, 2024)
 
 if __name__ == '__main__':
     main()
