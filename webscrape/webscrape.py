@@ -60,6 +60,7 @@ def visit_team_premier_urls(premier_urls):
         premier_table = soup.find('table') 
         for row in premier_table.tbody.find_all('tr'):
             row_data = []
+            # Each row find all identifiers and append their names to the table
             for cell in row.find_all(['th', 'td']):
                 row_data.append(cell.get_text(strip=True))
             row_data.append(team_name)
@@ -98,6 +99,7 @@ def get_data_by_year(start_year: int, end_year: int):
     for year in range(start_year, end_year):
         print("Getting data for the {year1}-{year2} season".format(year1 = str(year), year2 = str(year + 1)))
         links = get_team_links('https://fbref.com/en/comps/9/{year1}-{year2}/{year1}-{year2}-Premier-League-Stats'.format(year1 = str(year),year2 = str(year + 1)))
+        
         # Visit the team links
         data = []
         team_links = get_team_premier_urls(links)
@@ -106,7 +108,7 @@ def get_data_by_year(start_year: int, end_year: int):
         data.append(visit_team_premier_urls(team_links))
         
         # Write data to csv file
-        csv_file = os.getcwd() +'/premier_league_{year1}-{year2}.csv'.format(year1 = str(year), year2 = str(year+1))
+        csv_file = 'premier_league_{year1}-{year2}.csv'.format(year1 = str(year), year2 = str(year+1))
         print(f"Writing data to {csv_file}")
         
         with open(csv_file, 'w', newline='', encoding="utf-8") as f:
