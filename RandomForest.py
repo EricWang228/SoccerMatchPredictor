@@ -22,7 +22,9 @@ def clean_data() -> list:
     
     # Rolling averages for xG and Poss
     cols = ["xG", "Poss"]
+    # Add "_rolling" to all values in cols
     new_cols = [f"{col}_rolling" for col in cols]
+    # Group all matches for each team and apply the rolling average func to each group  
     rolling_matches = premier_matches.groupby('Team').apply(lambda x: rolling_avg(x,cols,new_cols), include_groups=False)
     return rolling_matches
 
@@ -46,8 +48,10 @@ def predict(premier_matches : list):
     return compared, error
     
 def rolling_avg(group, cols, new_cols):
+    # Sort matches by date to calculate rolling averages
     group = group.sort_values("Date")
     rolling = group[cols].rolling(3, closed='left').mean()
+    # Create new col for the rolling average, ignoring N/A results
     group[new_cols] = rolling
     group = group.dropna(subset=new_cols)
     return group
