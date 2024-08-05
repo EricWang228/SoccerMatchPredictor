@@ -22,6 +22,7 @@ def clean_data(csv_path : str):
     new_cols = [f"{col}_rolling" for col in cols]
     # Group all matches for each team and apply the rolling average func to each group  
     rolling_matches = premier_matches.groupby('Team').apply(lambda x: rolling_avg(x,cols,new_cols), include_groups=False)
+    rolling_matches = rolling_matches.droplevel('Team')
     return rolling_matches
     
 def rolling_avg(group, cols, new_cols):
@@ -41,7 +42,7 @@ def write_new_data(csv_path, cleaned_data):
 def main():
     csv_path = os.getcwd() + "/webscrape/premier_league_2023-2024.csv"
     cleaned_data = clean_data(csv_path)
-    write_new_data(csv_path, cleaned_data)
+    write_new_data(csv_path, cleaned_data.to_csv())
     
 if __name__ == '__main__':
     main()
