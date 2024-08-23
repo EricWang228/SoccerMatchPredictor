@@ -5,8 +5,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score 
 from sklearn.metrics import precision_score
 
-def clean_data() -> list:
-    premier_matches = pd.read_csv(os.getcwd() + "/webscrape/premier_league_2023-2024.csv")
+def clean_data(path : str) -> list:
+    premier_matches = pd.read_csv(os.getcwd() + path)
     
     # Remove unused columns
     del premier_matches["Match Report"]
@@ -26,15 +26,15 @@ def clean_data() -> list:
     new_cols = [f"{col}_rolling" for col in cols]
     # Group all matches for each team and apply the rolling average func to each group  
     rolling_matches = premier_matches.groupby('Team').apply(lambda x: rolling_avg(x,cols,new_cols), include_groups=False)
-    return rolling_matches
+    return rolling_matches.droplevel('Team')
 
-def predict(premier_matches : list):
+def predict(premier_matches : list, prev_year : list):
     # Create a Random Forest Model
-    rf = RandomForestClassifier(n_estimators=100, min_samples_split=10, random_state=1)
+    rf = RandomForestClassifier(n_estimators=200, min_samples_split=10, random_state=1)
     # Predictors and training data
     predictors = ["venue_code", "op_codes", "Poss", "xG", "xGA", "xG_rolling", "Poss_rolling"]
-    train_set = premier_matches[premier_matches['Date'] < '2023-12-28']
-    test_set = premier_matches[premier_matches['Date'] > '2023-12-28']
+    train_set = prev_year
+    test_set = premier_matches 
     
     # Fit the random forest model
     rf.fit(train_set[predictors], train_set['target'])
@@ -57,8 +57,9 @@ def rolling_avg(group, cols, new_cols):
     return group
 
 def main():
-    premier_matches = clean_data()
-    predictions, err = predict(premier_matches)
+    matches = clean_data("/webscrape/premier_league_2023-2024.csv")
+    prev_year = clean_data("/webscrape/premier_league_2022-2023.csv")
+    predictions, err = predict(matches, prev_year)
     print(err)
     print(predictions)
     
